@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+
+# build
+dist/
+
+# env
+.env
+.env.*
+
+# logs
+logs/
+*.log
+
+# prisma
+prisma/dev.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# coverage
+coverage/
+
+# npm
+npm-debug.log*
+
+# New Relic
+newrelic_agent.log
+
+*.zip
+backend-zipp.zip
