@@ -100,10 +100,22 @@ export default function App() {
             }
         );
 
+        socket.on(
+            "ride:cancelled",
+            (updatedRide: Ride) => {
+                setRide(updatedRide);
+
+                toast.error(
+                    "Ride cancelled — no driver available"
+                );
+            }
+        );
+
         return () => {
             socket.off("ride:assigned");
             socket.off("trip:ended");
             socket.off("payment:completed");
+            socket.off("ride:cancelled");
         };
     }, []);
 

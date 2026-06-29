@@ -8,6 +8,7 @@ import { useDriverSimulation } from "../hooks/useDriverSimulation";
 import {
     updateDriverLocation,
     acceptRide,
+    declineRide,
     endTrip,
     getDriverEarnings,
 } from "../services/driver.service";
@@ -112,6 +113,31 @@ export default function DriverPanel({
 
             toast.error(
                 "Unable to accept ride"
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleDeclineRide() {
+        if (!ride) return;
+
+        try {
+            setLoading(true);
+
+            await declineRide(
+                driver.id,
+                ride.id
+            );
+
+            setRide(null);
+
+            toast.success("Ride declined");
+        } catch (err) {
+            console.error(err);
+
+            toast.error(
+                "Unable to decline ride"
             );
         } finally {
             setLoading(false);
@@ -223,6 +249,18 @@ export default function DriverPanel({
                     className="w-full bg-green-600 hover:bg-green-700 text-white rounded-lg py-3 disabled:bg-gray-400"
                 >
                     Accept Ride
+                </button>
+
+                <button
+                    onClick={
+                        handleDeclineRide
+                    }
+                    disabled={
+                        loading || !ride
+                    }
+                    className="w-full bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg py-3 disabled:bg-gray-400"
+                >
+                    Decline Ride
                 </button>
 
                 <button

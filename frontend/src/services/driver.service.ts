@@ -35,6 +35,18 @@ export async function acceptRide(
     return response.data.data;
 }
 
+export async function declineRide(
+    driverId: string,
+    rideId: string
+): Promise<void> {
+    await api.post(
+        `/drivers/${driverId}/decline`,
+        {
+            rideId,
+        }
+    );
+}
+
 export async function endTrip(
     rideId: string
 ): Promise<Ride> {
