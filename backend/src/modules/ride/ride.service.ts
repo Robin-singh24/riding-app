@@ -83,14 +83,9 @@ export class RideService {
             }
         );
 
-        nearbyDrivers
-            .slice(0, 3)
-            .forEach((driver) => {
-                notifyRideRequested(
-                    driver.driverId,
-                    ride
-                );
-            });
+        for (const driver of nearbyDrivers.slice(0, 3)) {
+            notifyRideRequested(driver.driverId, ride);
+        }
 
         return ride;
     }
