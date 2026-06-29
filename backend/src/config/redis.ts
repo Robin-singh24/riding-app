@@ -93,3 +93,66 @@ export async function removeDriverLocation(
 export async function getAvailableDriverCount(): Promise<number> {
     return redis.zcard(DRIVER_LOCATION_KEY);
 }
+
+// ── Ride timeout tracking ──
+
+export const RIDE_TIMEOUT_SECONDS = 60;
+export const PENDING_RIDES_KEY = "rides:pending";
+
+export async function trackPendingRide(
+    rideId: string,
+    notifiedDriverIds: string[]
+): Promise<void> {
+    const pipeline = redis.pipeline();
+
+    // Store notified drivers for decline tracking
+    pipeline.set(
+        `ride:drivers:${rideId}`,
+        JSON.stringify(notifiedDriverIds),
+        "EX",
+        RIDE_TIMEOUT_SECONDS
+    );
+
+    // Sorted set scored by expiry timestamp for efficient polling
+    const expiresAt = Date.now() + RIDE_TIMEOUT_SECONDS * 1000;
+    pipeline.zadd(PENDING_RIDES_KEY, expiresAt, rideId);
+
+    await pipeline.exec();
+}
+
+export async function getNotifiedDrivers(
+    rideId: string
+): Promise<string[]> {
+    const raw = await redis.get(`ride:drivers:${rideId}`);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+}
+
+export async function updateNotifiedDrivers(
+    rideId: string,
+    driverIds: string[]
+): Promise<void> {
+    const ttl = await redis.ttl(`ride:drivers:${rideId}`);
+
+    if (ttl > 0) {
+        await redis.set(
+            `ride:drivers:${rideId}`,
+            JSON.stringify(driverIds),
+            "EX",
+            ttl
+        );
+    }
+}
+
+export async function removePendingRide(
+    rideId: string
+): Promise<void> {
+    const pipeline = redis.pipeline();
+    pipeline.zrem(PENDING_RIDES_KEY, rideId);
+    pipeline.del(`ride:drivers:${rideId}`);
+    await pipeline.exec();
+}
+
+export async function getExpiredPendingRides(): Promise<string[]> {
+    const now = Date.now();
+    return redis.zrangebyscore(PENDING_RIDES_KEY, "-inf", now);
+}

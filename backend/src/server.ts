@@ -1,5 +1,5 @@
 import "newrelic";
-// console.log(process.env.NEW_RELIC_LICENSE_KEY);
+
 import http from "http";
 
 import app from "./app";
@@ -11,6 +11,10 @@ import {
     disconnectRedis,
 } from "./config/redis";
 import { initializeSocket } from "./socket/socket";
+import {
+    startRideTimeoutWorker,
+    stopRideTimeoutWorker,
+} from "./workers/rideTimeout.worker";
 
 const server = http.createServer(app);
 
@@ -23,6 +27,7 @@ async function startServer(): Promise<void> {
         server.listen(env.PORT, () => {
             logger.info(`Server running on port ${env.PORT}`);
             initializeSocket(server);
+            startRideTimeoutWorker();
         });
     } catch (error) {
         logger.error(error);
@@ -35,6 +40,8 @@ startServer();
 
 async function shutdown(signal: string): Promise<void> {
     logger.info(`${signal} received. Shutting down gracefully...`);
+
+    stopRideTimeoutWorker();
 
     await prisma.$disconnect();
 

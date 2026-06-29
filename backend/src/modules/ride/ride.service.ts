@@ -7,7 +7,7 @@ import { estimateFare } from "./fareCalculator";
 import { getSurgeMultiplier } from "./surgeCalculator";
 import { CreateRideData, CreateRideDto } from "./ride.dto";
 import { RideRepository } from "./ride.repository";
-import { findNearbyDrivers } from "../../config/redis";
+import { findNearbyDrivers, trackPendingRide } from "../../config/redis";
 import { notifyRideRequested } from "../../socket";
 
 export class RideService {
@@ -90,9 +90,17 @@ export class RideService {
             }
         );
 
-        for (const driver of nearbyDrivers.slice(0, 3)) {
+        const driversToNotify = nearbyDrivers.slice(0, 3);
+
+        for (const driver of driversToNotify) {
             notifyRideRequested(driver.driverId, ride);
         }
+
+        // Track for timeout expiry and decline handling
+        await trackPendingRide(
+            ride.id,
+            driversToNotify.map((d) => d.driverId)
+        );
 
         return ride;
     }

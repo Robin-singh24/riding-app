@@ -1,6 +1,5 @@
 import { Payment, Ride } from "@prisma/client";
 
-
 import { getIo } from "./socket";
 
 export function notifyRideRequested(
@@ -37,4 +36,13 @@ export function notifyPaymentCompleted(
     getIo()
         .to(`rider:${riderId}`)
         .emit("payment:completed", payment);
+}
+
+export function notifyRideCancelled(
+    riderId: string,
+    ride: Ride
+): void {
+    getIo()
+        .to(`rider:${riderId}`)
+        .emit("ride:cancelled", ride);
 }

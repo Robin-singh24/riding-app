@@ -25,3 +25,15 @@ export const acceptRideSchema = z.object({
 
     query: z.object({}),
 });
+
+export const declineRideSchema = z.object({
+    body: z.object({
+        rideId: z.uuid(),
+    }),
+
+    params: z.object({
+        id: z.uuid(),
+    }),
+
+    query: z.object({}),
+});

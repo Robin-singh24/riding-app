@@ -65,7 +65,8 @@ export class TripService {
             {
                 lat: ride.destinationLat,
                 lng: ride.destinationLng,
-            }
+            },
+            ride.surgeMultiplier
         );
 
         let completedRide: Ride;

@@ -6,6 +6,8 @@ import { asyncHandler } from "../../utils/asyncHandler";
 import {
     AcceptRideDto,
     AcceptRideRequest,
+    DeclineRideDto,
+    DeclineRideRequest,
     DriverLocationDto,
     UpdateDriverLocationRequest,
 } from "./driver.dto";
@@ -54,6 +56,26 @@ export const acceptRide = asyncHandler<
         new ApiResponse(
             "Ride accepted successfully",
             ride
+        )
+    );
+});
+
+export const declineRide = asyncHandler<
+    { id: string },
+    any,
+    DeclineRideRequest
+>(async (req, res: Response) => {
+    const dto: DeclineRideDto = {
+        driverId: req.params.id,
+        rideId: req.body.rideId,
+    };
+
+    await driverService.declineRide(dto);
+
+    return res.status(200).json(
+        new ApiResponse(
+            "Ride declined",
+            null
         )
     );
 });

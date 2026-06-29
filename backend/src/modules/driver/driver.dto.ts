@@ -13,12 +13,22 @@ export interface AcceptRideDto {
     rideId: string;
 }
 
+export interface DeclineRideDto {
+    driverId: string;
+
+    rideId: string;
+}
+
 export interface UpdateDriverLocationRequest {
     lat: number;
     lng: number;
 }
 
 export interface AcceptRideRequest {
+    rideId: string;
+}
+
+export interface DeclineRideRequest {
     rideId: string;
 }
 

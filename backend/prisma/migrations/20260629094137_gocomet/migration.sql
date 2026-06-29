@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Ride" ADD COLUMN     "surgeMultiplier" DOUBLE PRECISION NOT NULL DEFAULT 1.0;

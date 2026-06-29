@@ -10,17 +10,21 @@ import { prisma } from "../../config/prisma";
 import {
     removeDriverLocation,
     updateDriverLocation,
+    removePendingRide,
+    getNotifiedDrivers,
+    updateNotifiedDrivers,
 } from "../../config/redis";
 
 import { ApiError } from "../../utils/ApiError";
 
 import {
     AcceptRideDto,
+    DeclineRideDto,
     DriverLocationDto,
 } from "./driver.dto";
 
 import { DriverRepository } from "./driver.repository";
-import { notifyRideAssigned } from "../../socket";
+import { notifyRideAssigned, notifyRideCancelled } from "../../socket";
 
 
 export class DriverService {
@@ -136,6 +140,9 @@ export class DriverService {
 
         await removeDriverLocation(dto.driverId);
 
+        // Ride accepted — stop timeout tracking
+        await removePendingRide(dto.rideId);
+
         const updatedRide =
             await this.driverRepository.findRideById(
                 dto.rideId
@@ -155,6 +162,50 @@ export class DriverService {
         return updatedRide;
     }
 
+    async declineRide(
+        dto: DeclineRideDto
+    ): Promise<void> {
+        const ride =
+            await this.driverRepository.findRideById(
+                dto.rideId
+            );
+
+        if (!ride) {
+            throw new ApiError(404, "Ride not found");
+        }
+
+        // Already accepted or cancelled — silently succeed (idempotent)
+        if (ride.status !== RideStatus.SEARCHING) {
+            return;
+        }
+
+        const notifiedDrivers = await getNotifiedDrivers(dto.rideId);
+
+        if (!notifiedDrivers.includes(dto.driverId)) {
+            throw new ApiError(
+                403,
+                "Driver was not offered this ride"
+            );
+        }
+
+        // Remove this driver from the notified list
+        const remaining = notifiedDrivers.filter(
+            (id) => id !== dto.driverId
+        );
+
+        if (remaining.length === 0) {
+            // All notified drivers declined — cancel ride immediately
+            await this.driverRepository.cancelRide(dto.rideId);
+            await removePendingRide(dto.rideId);
+            notifyRideCancelled(ride.riderId, {
+                ...ride,
+                status: RideStatus.CANCELLED,
+            });
+        } else {
+            // Update the remaining list so future declines are tracked
+            await updateNotifiedDrivers(dto.rideId, remaining);
+        }
+    }
 
     async getDriverEarnings(
         driverId: string

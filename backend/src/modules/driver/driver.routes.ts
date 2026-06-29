@@ -2,15 +2,16 @@ import { Router } from "express";
 
 import { validate } from "../../middleware/validate";
 
-
 import {
     acceptRide,
+    declineRide,
     updateDriverLocation,
     getDriverEarnings
 } from "./driver.controller";
 
 import {
     acceptRideSchema,
+    declineRideSchema,
     updateDriverLocationSchema,
 } from "./driver.validation";
 
@@ -26,6 +27,12 @@ router.post(
     "/:id/accept",
     validate(acceptRideSchema),
     acceptRide
+);
+
+router.post(
+    "/:id/decline",
+    validate(declineRideSchema),
+    declineRide
 );
 
 router.get(

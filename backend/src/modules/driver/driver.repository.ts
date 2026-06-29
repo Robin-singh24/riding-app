@@ -120,4 +120,19 @@ export class DriverRepository {
             totalEarnings: Number(totalEarnings.toFixed(2)),
         };
     }
+
+    async cancelRide(
+        rideId: string,
+        db: DbClient = prisma
+    ): Promise<Ride> {
+        return db.ride.update({
+            where: {
+                id: rideId,
+                status: RideStatus.SEARCHING,
+            },
+            data: {
+                status: RideStatus.CANCELLED,
+            },
+        });
+    }
 }
