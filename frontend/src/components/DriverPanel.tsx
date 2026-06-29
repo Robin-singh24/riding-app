@@ -28,6 +28,12 @@ export default function DriverPanel({
     const [loading, setLoading] =
         useState(false);
 
+    const [driverLocation, setDriverLocation] =
+        useState({
+            lat: 12.9716,
+            lng: 77.5946,
+        });
+
     const [earnings, setEarnings] =
         useState<DriverEarnings>({
             completedTrips: 0,
@@ -51,29 +57,34 @@ export default function DriverPanel({
         loadEarnings();
     }, [driver.id, ride?.status]);
 
-    async function handleUpdateLocation() {
-        try {
-            setLoading(true);
+    function moveDriverRandomly() {
+        setDriverLocation((prev) => ({
+            lat:
+                prev.lat +
+                (Math.random() - 0.5) * 0.0004,
 
-            await updateDriverLocation(
-                driver.id,
-                12.9716,
-                77.5946
-            );
-
-            toast.success(
-                "Driver location updated"
-            );
-        } catch (err) {
-            console.error(err);
-
-            toast.error(
-                "Unable to update location"
-            );
-        } finally {
-            setLoading(false);
-        }
+            lng:
+                prev.lng +
+                (Math.random() - 0.5) * 0.0004,
+        }));
     }
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            moveDriverRandomly();
+        }, 2000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    useEffect(() => {
+        updateDriverLocation(
+            driver.id,
+            driverLocation.lat,
+            driverLocation.lng
+        ).catch(console.error);
+
+    }, [driver.id, driverLocation]);
 
     async function handleAcceptRide() {
         if (!ride) {
@@ -176,15 +187,23 @@ export default function DriverPanel({
 
             <div className="space-y-4">
 
-                <button
-                    onClick={
-                        handleUpdateLocation
-                    }
-                    disabled={loading}
-                    className="w-full bg-sky-600 hover:bg-sky-700 text-white rounded-lg py-3 disabled:bg-gray-400"
-                >
-                    Update Location
-                </button>
+                <div className="bg-slate-100 rounded-lg p-4">
+
+                    <h3 className="font-semibold mb-2">
+                        Live GPS
+                    </h3>
+
+                    <p>
+                        <strong>Latitude:</strong>{" "}
+                        {driverLocation.lat.toFixed(6)}
+                    </p>
+
+                    <p>
+                        <strong>Longitude:</strong>{" "}
+                        {driverLocation.lng.toFixed(6)}
+                    </p>
+
+                </div>
 
                 <button
                     onClick={
