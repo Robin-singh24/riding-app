@@ -57,7 +57,7 @@ export default function DriverPanel({
         loadEarnings();
     }, [driver.id, ride?.status]);
 
-    function moveDriverRandomly() {
+    function simulateDriverMovement() {
         setDriverLocation((prev) => ({
             lat:
                 prev.lat +
@@ -71,19 +71,26 @@ export default function DriverPanel({
 
     useEffect(() => {
         const interval = setInterval(() => {
-            moveDriverRandomly();
+            simulateDriverMovement();
         }, 2000);
 
         return () => clearInterval(interval);
     }, []);
 
     useEffect(() => {
-        updateDriverLocation(
-            driver.id,
-            driverLocation.lat,
-            driverLocation.lng
-        ).catch(console.error);
+        async function syncDriverLocation() {
+            try {
+                await updateDriverLocation(
+                    driver.id,
+                    driverLocation.lat,
+                    driverLocation.lng
+                );
+            } catch (err) {
+                console.error(err);
+            }
+        }
 
+        syncDriverLocation();
     }, [driver.id, driverLocation]);
 
     async function handleAcceptRide() {
@@ -201,6 +208,10 @@ export default function DriverPanel({
                     <p>
                         <strong>Longitude:</strong>{" "}
                         {driverLocation.lng.toFixed(6)}
+                    </p>
+
+                    <p className="text-green-600 text-sm mt-2">
+                        ● Updating every 2 seconds
                     </p>
 
                 </div>
