@@ -42,6 +42,22 @@ export class TripRepository {
         });
     }
 
+    async startRide(
+        rideId: string,
+        db: DbClient = prisma
+    ): Promise<Ride> {
+        return db.ride.update({
+            where: {
+                id: rideId,
+                status: RideStatus.ASSIGNED,
+            },
+            data: {
+                status: RideStatus.STARTED,
+                startedAt: new Date(),
+            },
+        });
+    }
+
     async completeRide(
         rideId: string,
         fare: number,

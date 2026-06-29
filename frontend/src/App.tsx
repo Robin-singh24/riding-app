@@ -79,6 +79,17 @@ export default function App() {
         );
 
         socket.on(
+            "trip:started",
+            (updatedRide: Ride) => {
+                setRide(updatedRide);
+
+                toast.success(
+                    "Trip started!"
+                );
+            }
+        );
+
+        socket.on(
             "trip:ended",
             (updatedRide: Ride) => {
                 setRide(updatedRide);
@@ -113,6 +124,7 @@ export default function App() {
 
         return () => {
             socket.off("ride:assigned");
+            socket.off("trip:started");
             socket.off("trip:ended");
             socket.off("payment:completed");
             socket.off("ride:cancelled");

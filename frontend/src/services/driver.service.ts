@@ -47,6 +47,17 @@ export async function declineRide(
     );
 }
 
+export async function startTrip(
+    rideId: string
+): Promise<Ride> {
+    const response = await api.post(
+        `/trips/${rideId}/start`,
+        {}
+    );
+
+    return response.data.data;
+}
+
 export async function endTrip(
     rideId: string
 ): Promise<Ride> {

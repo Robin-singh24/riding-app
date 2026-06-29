@@ -3,12 +3,29 @@ import { Response } from "express";
 import { ApiResponse } from "../../utils/ApiResponse";
 import { asyncHandler } from "../../utils/asyncHandler";
 
-import { EndTripDto } from "./trip.dto";
+import { StartTripDto, EndTripDto } from "./trip.dto";
 import { TripRepository } from "./trip.repository";
 import { TripService } from "./trip.service";
 
 const tripRepository = new TripRepository();
 const tripService = new TripService(tripRepository);
+
+export const startTrip = asyncHandler<
+    { id: string }
+>(async (req, res: Response) => {
+    const dto: StartTripDto = {
+        tripId: req.params.id,
+    };
+
+    const ride = await tripService.startTrip(dto);
+
+    return res.status(200).json(
+        new ApiResponse(
+            "Trip started successfully",
+            ride
+        )
+    );
+});
 
 export const endTrip = asyncHandler<
     { id: string }

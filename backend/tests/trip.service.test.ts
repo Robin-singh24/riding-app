@@ -11,6 +11,7 @@ import { ApiError } from "../src/utils/ApiError";
 
 // Mock socket notifications
 jest.mock("../src/socket", () => ({
+    notifyTripStarted: jest.fn(),
     notifyTripEnded: jest.fn(),
 }));
 
@@ -24,7 +25,7 @@ jest.mock("../src/config/prisma", () => ({
     },
 }));
 
-import { notifyTripEnded } from "../src/socket";
+import { notifyTripStarted, notifyTripEnded } from "../src/socket";
 
 describe("TripService", () => {
     let tripService: TripService;
@@ -49,8 +50,14 @@ describe("TripService", () => {
         updatedAt: new Date(),
     };
 
-    const mockCompletedRide = {
+    const mockStartedRide = {
         ...mockAssignedRide,
+        status: RideStatus.STARTED,
+        startedAt: new Date(),
+    };
+
+    const mockCompletedRide = {
+        ...mockStartedRide,
         status: RideStatus.COMPLETED,
         endedAt: new Date(),
     };
@@ -79,6 +86,7 @@ describe("TripService", () => {
         tripRepository = {
             findRideById: jest.fn(),
             findDriverById: jest.fn(),
+            startRide: jest.fn(),
             completeRide: jest.fn(),
             updateDriverStatus: jest.fn(),
         } as unknown as jest.Mocked<TripRepository>;
@@ -88,9 +96,65 @@ describe("TripService", () => {
         jest.clearAllMocks();
     });
 
+    describe("startTrip", () => {
+        it("should start a trip and notify the rider", async () => {
+            tripRepository.findRideById.mockResolvedValue(mockAssignedRide);
+            tripRepository.startRide.mockResolvedValue(mockStartedRide);
+
+            const result = await tripService.startTrip({ tripId: "ride-1" });
+
+            expect(result.status).toBe(RideStatus.STARTED);
+            expect(tripRepository.startRide).toHaveBeenCalledWith("ride-1");
+            expect(notifyTripStarted).toHaveBeenCalledWith(
+                "rider-1",
+                mockStartedRide
+            );
+        });
+
+        it("should throw 404 if trip does not exist", async () => {
+            tripRepository.findRideById.mockResolvedValue(null);
+
+            await expect(
+                tripService.startTrip({ tripId: "nonexistent" })
+            ).rejects.toMatchObject({
+                statusCode: 404,
+                message: "Trip not found",
+            });
+        });
+
+        it("should throw 400 if trip is not in ASSIGNED status", async () => {
+            const searchingRide = {
+                ...mockAssignedRide,
+                status: RideStatus.SEARCHING,
+            };
+            tripRepository.findRideById.mockResolvedValue(searchingRide);
+
+            await expect(
+                tripService.startTrip({ tripId: "ride-1" })
+            ).rejects.toMatchObject({
+                statusCode: 400,
+                message: "Trip can only be started from ASSIGNED status",
+            });
+        });
+
+        it("should throw 400 if ride has no driver assigned", async () => {
+            const noDriverRide = {
+                ...mockAssignedRide,
+                driverId: null,
+            };
+            tripRepository.findRideById.mockResolvedValue(noDriverRide);
+
+            await expect(
+                tripService.startTrip({ tripId: "ride-1" })
+            ).rejects.toMatchObject({
+                statusCode: 400,
+            });
+        });
+    });
+
     describe("endTrip", () => {
         it("should complete a trip and notify the rider", async () => {
-            tripRepository.findRideById.mockResolvedValue(mockAssignedRide);
+            tripRepository.findRideById.mockResolvedValue(mockStartedRide);
             tripRepository.findDriverById.mockResolvedValue(mockDriver);
             tripRepository.completeRide.mockResolvedValue(mockCompletedRide);
 
@@ -120,24 +184,20 @@ describe("TripService", () => {
             });
         });
 
-        it("should throw 400 if trip is not in ASSIGNED status", async () => {
-            const searchingRide = {
-                ...mockAssignedRide,
-                status: RideStatus.SEARCHING,
-            };
-            tripRepository.findRideById.mockResolvedValue(searchingRide);
+        it("should throw 400 if trip is not in STARTED status", async () => {
+            tripRepository.findRideById.mockResolvedValue(mockAssignedRide);
 
             await expect(
                 tripService.endTrip({ tripId: "ride-1" })
             ).rejects.toMatchObject({
                 statusCode: 400,
-                message: "Trip cannot be ended",
+                message: "Trip can only be ended from STARTED status",
             });
         });
 
         it("should throw 400 if ride has no driver assigned", async () => {
             const noDriverRide = {
-                ...mockAssignedRide,
+                ...mockStartedRide,
                 driverId: null,
             };
             tripRepository.findRideById.mockResolvedValue(noDriverRide);
@@ -150,13 +210,12 @@ describe("TripService", () => {
         });
 
         it("should recalculate fare on trip completion", async () => {
-            tripRepository.findRideById.mockResolvedValue(mockAssignedRide);
+            tripRepository.findRideById.mockResolvedValue(mockStartedRide);
             tripRepository.findDriverById.mockResolvedValue(mockDriver);
             tripRepository.completeRide.mockResolvedValue(mockCompletedRide);
 
             await tripService.endTrip({ tripId: "ride-1" });
 
-            // Verify completeRide was called with a recalculated fare
             const [rideId, fare] = tripRepository.completeRide.mock.calls[0];
             expect(rideId).toBe("ride-1");
             expect(typeof fare).toBe("number");

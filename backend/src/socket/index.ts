@@ -20,6 +20,15 @@ export function notifyRideAssigned(
         .emit("ride:assigned", ride);
 }
 
+export function notifyTripStarted(
+    riderId: string,
+    ride: Ride
+): void {
+    getIo()
+        .to(`rider:${riderId}`)
+        .emit("trip:started", ride);
+}
+
 export function notifyTripEnded(
     riderId: string,
     ride: Ride

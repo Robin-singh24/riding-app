@@ -9,16 +9,16 @@ import { prisma } from "../../config/prisma";
 import { ApiError } from "../../utils/ApiError";
 
 import { estimateFare } from "../ride/fareCalculator";
-import { EndTripDto } from "./trip.dto";
+import { StartTripDto, EndTripDto } from "./trip.dto";
 import { TripRepository } from "./trip.repository";
-import { notifyTripEnded } from "../../socket";
+import { notifyTripStarted, notifyTripEnded } from "../../socket";
 
 export class TripService {
     constructor(
         private readonly tripRepository: TripRepository
     ) { }
 
-    async endTrip(dto: EndTripDto): Promise<Ride> {
+    async startTrip(dto: StartTripDto): Promise<Ride> {
         const ride = await this.tripRepository.findRideById(
             dto.tripId
         );
@@ -30,7 +30,42 @@ export class TripService {
         if (ride.status !== RideStatus.ASSIGNED) {
             throw new ApiError(
                 400,
-                "Trip cannot be ended"
+                "Trip can only be started from ASSIGNED status"
+            );
+        }
+
+        if (!ride.driverId) {
+            throw new ApiError(
+                400,
+                "No driver assigned to this trip"
+            );
+        }
+
+        const startedRide = await this.tripRepository.startRide(
+            ride.id
+        );
+
+        notifyTripStarted(
+            startedRide.riderId,
+            startedRide
+        );
+
+        return startedRide;
+    }
+
+    async endTrip(dto: EndTripDto): Promise<Ride> {
+        const ride = await this.tripRepository.findRideById(
+            dto.tripId
+        );
+
+        if (!ride) {
+            throw new ApiError(404, "Trip not found");
+        }
+
+        if (ride.status !== RideStatus.STARTED) {
+            throw new ApiError(
+                400,
+                "Trip can only be ended from STARTED status"
             );
         }
 

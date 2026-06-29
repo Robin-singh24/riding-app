@@ -2,10 +2,16 @@ import { Router } from "express";
 
 import { validate } from "../../middleware/validate";
 
-import { endTrip } from "./trip.controller";
-import { endTripSchema } from "./trip.validation";
+import { startTrip, endTrip } from "./trip.controller";
+import { startTripSchema, endTripSchema } from "./trip.validation";
 
 const router = Router();
+
+router.post(
+    "/:id/start",
+    validate(startTripSchema),
+    startTrip
+);
 
 router.post(
     "/:id/end",

@@ -35,6 +35,11 @@ jest.mock("../src/config/prisma", () => ({
     },
 }));
 
+// Mock surge calculator
+jest.mock("../src/modules/ride/surgeCalculator", () => ({
+    getSurgeMultiplier: jest.fn().mockResolvedValue(1.0),
+}));
+
 import { findNearbyDrivers } from "../src/config/redis";
 import { notifyRideRequested } from "../src/socket";
 

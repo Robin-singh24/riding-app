@@ -9,6 +9,7 @@ import {
     updateDriverLocation,
     acceptRide,
     declineRide,
+    startTrip,
     endTrip,
     getDriverEarnings,
 } from "../services/driver.service";
@@ -100,11 +101,6 @@ export default function DriverPanel({
 
             setRide(updatedRide);
 
-            navigateTo({
-                lat: updatedRide.destinationLat,
-                lng: updatedRide.destinationLng,
-            });
-
             toast.success(
                 "Ride accepted!"
             );
@@ -138,6 +134,36 @@ export default function DriverPanel({
 
             toast.error(
                 "Unable to decline ride"
+            );
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleStartTrip() {
+        if (!ride) return;
+
+        try {
+            setLoading(true);
+
+            const updatedRide =
+                await startTrip(ride.id);
+
+            setRide(updatedRide);
+
+            navigateTo({
+                lat: updatedRide.destinationLat,
+                lng: updatedRide.destinationLng,
+            });
+
+            toast.success(
+                "Trip started!"
+            );
+        } catch (err) {
+            console.error(err);
+
+            toast.error(
+                "Unable to start trip"
             );
         } finally {
             setLoading(false);
@@ -261,6 +287,18 @@ export default function DriverPanel({
                     className="w-full bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg py-3 disabled:bg-gray-400"
                 >
                     Decline Ride
+                </button>
+
+                <button
+                    onClick={
+                        handleStartTrip
+                    }
+                    disabled={
+                        loading || !ride
+                    }
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-3 disabled:bg-gray-400"
+                >
+                    Start Trip
                 </button>
 
                 <button
