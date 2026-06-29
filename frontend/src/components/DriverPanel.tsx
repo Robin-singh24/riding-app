@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import toast from "react-hot-toast";
 
 import type { DemoUser } from "../services/demo.service";
+import { useDriverSimulation } from "../hooks/useDriverSimulation";
 
 import {
     updateDriverLocation,
@@ -28,11 +29,17 @@ export default function DriverPanel({
     const [loading, setLoading] =
         useState(false);
 
-    const [driverLocation, setDriverLocation] =
-        useState({
+    const {
+        driverLocation,
+        navigateTo,
+        stopNavigation,
+        isNavigating,
+    } = useDriverSimulation({
+        initialLocation: {
             lat: 12.9716,
             lng: 77.5946,
-        });
+        },
+    });
 
     const [earnings, setEarnings] =
         useState<DriverEarnings>({
@@ -56,26 +63,6 @@ export default function DriverPanel({
 
         loadEarnings();
     }, [driver.id, ride?.status]);
-
-    function simulateDriverMovement() {
-        setDriverLocation((prev) => ({
-            lat:
-                prev.lat +
-                (Math.random() - 0.5) * 0.0004,
-
-            lng:
-                prev.lng +
-                (Math.random() - 0.5) * 0.0004,
-        }));
-    }
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            simulateDriverMovement();
-        }, 2000);
-
-        return () => clearInterval(interval);
-    }, []);
 
     useEffect(() => {
         async function syncDriverLocation() {
@@ -112,6 +99,11 @@ export default function DriverPanel({
 
             setRide(updatedRide);
 
+            navigateTo({
+                lat: updatedRide.destinationLat,
+                lng: updatedRide.destinationLng,
+            });
+
             toast.success(
                 "Ride accepted!"
             );
@@ -136,6 +128,8 @@ export default function DriverPanel({
 
         try {
             setLoading(true);
+
+            stopNavigation();
 
             const updatedRide =
                 await endTrip(
@@ -210,8 +204,11 @@ export default function DriverPanel({
                         {driverLocation.lng.toFixed(6)}
                     </p>
 
-                    <p className="text-green-600 text-sm mt-2">
-                        ● Updating every 2 seconds
+                    <p className="text-sm mt-2">
+                        <strong>Status:</strong>{" "}
+                        {isNavigating
+                            ? "🚗 Driving"
+                            : "🟢 Idle"}
                     </p>
 
                 </div>
