@@ -98,26 +98,24 @@ export class DriverRepository {
         completedTrips: number;
         totalEarnings: number;
     }> {
-        const rides = await db.ride.findMany({
-            where: {
-                driverId,
-                status: RideStatus.COMPLETED,
-            },
-            select: {
-                fare: true,
-            },
-        });
-
-        const completedTrips = rides.length;
-
-        const totalEarnings = rides.reduce(
-            (sum, ride) => sum + Number(ride.fare),
-            0
-        );
+        const [{ _count, _sum }] = await Promise.all([
+            db.ride.aggregate({
+                where: {
+                    driverId,
+                    status: RideStatus.COMPLETED,
+                },
+                _count: true,
+                _sum: {
+                    fare: true,
+                },
+            }),
+        ]);
 
         return {
-            completedTrips,
-            totalEarnings: Number(totalEarnings.toFixed(2)),
+            completedTrips: _count,
+            totalEarnings: Number(
+                (_sum.fare ?? 0).toFixed(2)
+            ),
         };
     }
 

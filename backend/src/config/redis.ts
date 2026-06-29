@@ -75,11 +75,65 @@ export async function findNearbyDrivers(
         "ASC"
     )) as [string, string][];
 
+    console.log("Geo result:", result);
+
     return result.map((entry) => ({
         driverId: entry[0],
         distance: Number(entry[1]),
     }));
 }
+
+// export async function findNearbyDrivers(
+//     latitude: number,
+//     longitude: number,
+//     radiusInKm = 5
+// ): Promise<
+//     Array<{
+//         driverId: string;
+//         distance: number;
+//     }>
+// > {
+//     console.log("Redis status:", redis.status);
+//     console.log("Searching:", {
+//         latitude,
+//         longitude,
+//         radiusInKm,
+//     });
+
+//     console.log(
+//         "All drivers:",
+//         await redis.zrange(
+//             DRIVER_LOCATION_KEY,
+//             0,
+//             -1
+//         )
+//     );
+
+//     console.log(
+//         "GeoPos:",
+//         await redis.geopos(
+//             DRIVER_LOCATION_KEY,
+//             "eb2d7c15-ab9b-44dd-b57b-3c8491d3bbfe"
+//         )
+//     );
+
+//     const result = (await redis.georadius(
+//         DRIVER_LOCATION_KEY,
+//         longitude,
+//         latitude,
+//         radiusInKm,
+//         "km",
+//         "WITHDIST",
+//         "ASC"
+//     )) as [string, string][];
+
+//     console.log("GEORADIUS:", result);
+
+//     return result.map(([driverId, distance]) => ({
+//         driverId,
+//         distance: Number(distance),
+//     }));
+// }
 
 export async function removeDriverLocation(
     driverId: string

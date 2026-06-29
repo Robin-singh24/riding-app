@@ -66,19 +66,26 @@ export class RideService {
             status: RideStatus.SEARCHING,
         };
 
+        console.log("Pickup DTO:", dto.pickup);
         const nearbyDrivers =
             await findNearbyDrivers(
                 dto.pickup.lat,
                 dto.pickup.lng,
-                5
+                50
             );
 
+        console.log(
+            "Nearby drivers:",
+            nearbyDrivers
+        );
         if (nearbyDrivers.length === 0) {
             throw new ApiError(
                 404,
                 "No nearby drivers found"
             );
         }
+
+        console.log("Nearby drivers:", nearbyDrivers);
 
         // Transaction
         const ride = await prisma.$transaction(
