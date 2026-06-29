@@ -6,11 +6,13 @@ import { ApiError } from "../../utils/ApiError";
 import { estimateFare } from "./fareCalculator";
 import { CreateRideData, CreateRideDto } from "./ride.dto";
 import { RideRepository } from "./ride.repository";
+import { findNearbyDrivers } from "../../config/redis";
+import { notifyRideRequested } from "../../socket";
 
 export class RideService {
     constructor(
         private readonly rideRepository: RideRepository
-    ) {}
+    ) { }
 
     async createRide(dto: CreateRideDto): Promise<Ride> {
         // Idempotency Check
@@ -57,6 +59,20 @@ export class RideService {
             status: RideStatus.SEARCHING,
         };
 
+        const nearbyDrivers =
+            await findNearbyDrivers(
+                dto.pickup.lat,
+                dto.pickup.lng,
+                5
+            );
+
+        if (nearbyDrivers.length === 0) {
+            throw new ApiError(
+                404,
+                "No nearby drivers found"
+            );
+        }
+
         // Transaction
         const ride = await prisma.$transaction(
             async (tx: Prisma.TransactionClient) => {
@@ -66,6 +82,15 @@ export class RideService {
                 );
             }
         );
+
+        nearbyDrivers
+            .slice(0, 3)
+            .forEach((driver) => {
+                notifyRideRequested(
+                    driver.driverId,
+                    ride
+                );
+            });
 
         return ride;
     }
