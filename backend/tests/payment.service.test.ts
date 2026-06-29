@@ -52,6 +52,7 @@ describe("PaymentService", () => {
         destinationLat: 12.9352,
         destinationLng: 77.6245,
         fare: new Prisma.Decimal(250),
+        surgeMultiplier: 1.0,
         status: RideStatus.COMPLETED,
         idempotencyKey: "key-1",
         requestedAt: new Date(),

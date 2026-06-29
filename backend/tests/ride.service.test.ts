@@ -14,6 +14,7 @@ import type { CreateRideDto } from "../src/modules/ride/ride.dto";
 // Mock redis (findNearbyDrivers)
 jest.mock("../src/config/redis", () => ({
     findNearbyDrivers: jest.fn(),
+    trackPendingRide: jest.fn(),
     updateDriverLocation: jest.fn(),
     removeDriverLocation: jest.fn(),
 }));
@@ -72,6 +73,7 @@ describe("RideService", () => {
         destinationLat: 12.9352,
         destinationLng: 77.6245,
         fare: new Prisma.Decimal(180),
+        surgeMultiplier: 1.0,
         status: RideStatus.SEARCHING,
         idempotencyKey: "idem-key-123",
         requestedAt: new Date(),

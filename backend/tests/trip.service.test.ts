@@ -39,6 +39,7 @@ describe("TripService", () => {
         destinationLat: 12.9352,
         destinationLng: 77.6245,
         fare: new Prisma.Decimal(180),
+        surgeMultiplier: 1.0,
         status: RideStatus.ASSIGNED,
         idempotencyKey: "key-1",
         requestedAt: new Date(),

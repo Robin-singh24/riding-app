@@ -13,11 +13,15 @@ import { ApiError } from "../src/utils/ApiError";
 jest.mock("../src/config/redis", () => ({
     updateDriverLocation: jest.fn(),
     removeDriverLocation: jest.fn(),
+    removePendingRide: jest.fn(),
+    getNotifiedDrivers: jest.fn(),
+    updateNotifiedDrivers: jest.fn(),
 }));
 
 // Mock socket notifications
 jest.mock("../src/socket", () => ({
     notifyRideAssigned: jest.fn(),
+    notifyRideCancelled: jest.fn(),
 }));
 
 // Mock prisma.$transaction
@@ -76,6 +80,7 @@ describe("DriverService", () => {
         destinationLat: 12.9352,
         destinationLng: 77.6245,
         fare: new Prisma.Decimal(180),
+        surgeMultiplier: 1.0,
         status: RideStatus.SEARCHING,
         idempotencyKey: "key-1",
         requestedAt: new Date(),
@@ -98,6 +103,7 @@ describe("DriverService", () => {
             updateDriverStatus: jest.fn(),
             assignDriverToRide: jest.fn(),
             updateRideStatus: jest.fn(),
+            cancelRide: jest.fn(),
             getDriverEarnings: jest.fn(),
         } as unknown as jest.Mocked<DriverRepository>;
 
