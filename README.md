@@ -391,9 +391,7 @@ npm run dev
 
 # 🔮 Future Improvements
 
-- Redis GEO Indexing for Nearest Driver Search
 - JWT Authentication
-- Surge Pricing
 - ETA Calculation
 - Route Optimization
 - Kafka/RabbitMQ Event Streaming
