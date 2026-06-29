@@ -4,6 +4,7 @@ import { prisma } from "../../config/prisma";
 import { ApiError } from "../../utils/ApiError";
 
 import { estimateFare } from "./fareCalculator";
+import { getSurgeMultiplier } from "./surgeCalculator";
 import { CreateRideData, CreateRideDto } from "./ride.dto";
 import { RideRepository } from "./ride.repository";
 import { findNearbyDrivers } from "../../config/redis";
@@ -35,10 +36,14 @@ export class RideService {
             throw new ApiError(404, "Rider not found");
         }
 
+        // Surge Pricing
+        const surgeMultiplier = await getSurgeMultiplier();
+
         // Calculate Fare
         const fare = estimateFare(
             dto.pickup,
-            dto.destination
+            dto.destination,
+            surgeMultiplier
         );
 
         const rideData: CreateRideData = {
@@ -51,6 +56,8 @@ export class RideService {
             destinationLng: dto.destination.lng,
 
             fare,
+
+            surgeMultiplier,
 
             paymentMethod: dto.paymentMethod,
 

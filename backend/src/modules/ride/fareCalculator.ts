@@ -36,11 +36,12 @@ function calculateDistance(
 
 export function estimateFare(
     pickup: Location,
-    destination: Location
+    destination: Location,
+    surgeMultiplier: number = 1.0
 ): number {
     const distance = calculateDistance(pickup, destination);
 
-    const fare = BASE_FARE + distance * PER_KM_RATE;
+    const fare = (BASE_FARE + distance * PER_KM_RATE) * surgeMultiplier;
 
     return Number(fare.toFixed(2));
 }

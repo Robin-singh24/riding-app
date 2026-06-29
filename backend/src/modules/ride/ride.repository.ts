@@ -54,6 +54,8 @@ export class RideRepository {
 
                 fare: data.fare,
 
+                surgeMultiplier: data.surgeMultiplier,
+
                 status: data.status,
 
                 idempotencyKey: data.idempotencyKey,

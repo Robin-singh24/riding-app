@@ -43,6 +43,7 @@ model Ride {
   destinationLat Float
   destinationLng Float
   fare           Decimal    @db.Decimal(10, 2)
+  surgeMultiplier Float     @default(1.0)
   status         RideStatus @default(REQUESTED)
   idempotencyKey String     @unique
   requestedAt    DateTime   @default(now())

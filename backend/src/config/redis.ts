@@ -89,3 +89,7 @@ export async function removeDriverLocation(
         driverId
     );
 }
+
+export async function getAvailableDriverCount(): Promise<number> {
+    return redis.zcard(DRIVER_LOCATION_KEY);
+}

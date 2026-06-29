@@ -24,6 +24,8 @@ export interface CreateRideData {
 
     fare: number;
 
+    surgeMultiplier: number;
+
     paymentMethod: PaymentMethod;
 
     idempotencyKey: string;
